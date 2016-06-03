@@ -107,6 +107,17 @@ public class Vector2D {
 	}
 	
 	public String toString() {
-		return "(" + Math.round(x*1000.)/1000. + ", " + Math.round(y*1000.)/1000. + ")";
+		return "(" + x + ", " + y + ")";
+	}
+	
+	public String toStringNdecimals(int decimals) {
+		if (decimals < 0)
+			return "Error decimals";
+		
+		return String.format("(%."+decimals+"f, %."+decimals+"f)", x, y);
+	}
+	
+	public boolean isNaN() {
+		return Double.isNaN(x) || Double.isNaN(y);
 	}
 }

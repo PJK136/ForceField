@@ -1,19 +1,21 @@
 
 public abstract class Field {
 	protected double step;
-	private double constantStart;
-	private double constantEnd;
-	private double constantStep;
+	protected double constantStart;
+	protected double constantEnd;
+	protected double constantStep;
+	protected double parameter;
 	
 	public Field(double step) {
-		this(step, 0., 0., 1.);
+		this(step, 0., 0., 1., 1.);
 	}
 	
-	public Field(double step, double constantStart, double constantEnd, double constantStep) {
+	public Field(double step, double constantStart, double constantEnd, double constantStep, double parameter) {
 		this.step = step;
 		this.constantStart = constantStart;
 		this.constantEnd = constantEnd;
 		this.constantStep = constantStep;
+		this.parameter = parameter;
 	}
 	
 	public double step() {
@@ -46,5 +48,13 @@ public abstract class Field {
 	
 	public void setConstantStep(double step) {
 		constantStep = step;
+	}
+	
+	public double parameter() {
+		return parameter;
+	}
+	
+	public void setParameter(double parameter) {
+		this.parameter = parameter;
 	}
 }
