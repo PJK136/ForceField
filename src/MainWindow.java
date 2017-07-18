@@ -22,12 +22,17 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -41,6 +46,7 @@ import javax.swing.event.DocumentListener;
 public class MainWindow implements ChangeListener, MouseListener, ItemListener, ActionListener, DocumentListener {
 	private JFrame window;
 	private JSplitPane splitPane;
+	private JScrollPane sideScrollPane;
 	private JPanel sidePanel;
 	private FieldViewPanel fieldViewPanel;
 	
@@ -266,7 +272,9 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 		// /!\ Le tableau est partagé startingPointList et fielViewPanel
 		fieldViewPanel.setStartingPoints(((Vector2DListModel) startingPointList.getModel()).getList()); 
 		
-		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, sidePanel, fieldViewPanel);
+		sideScrollPane = new JScrollPane(sidePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		
+		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, sideScrollPane, fieldViewPanel);
 		window.getContentPane().add(splitPane);
 		
 		renderType.addItemListener(this);
@@ -308,6 +316,34 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 		analytic.setSelected(true);
 		numeric.setSelected(false);
 		lineIntegral.setSelected(false);
+		
+		JMenuBar menuBar = new JMenuBar();
+		JMenu menu = new JMenu("Menu");
+		JMenuItem quit = new JMenuItem("Quitter");
+		quit.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				window.dispose();
+			}
+		});
+		menu.add(quit);
+		
+		JMenu question = new JMenu("?");
+		JMenuItem about = new JMenuItem("À propos...");
+		about.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JOptionPane.showMessageDialog(window, "Force Field\n\n"+
+													  "Logiciel de modélisation de lignes de champ à partir d'une équation\n"+
+													  "de lignes de champ ou d'une expression d'un champ (de force).\n\n"+
+													  "Copyright © Paul DU 2016-2017", "À propos de Force Field", JOptionPane.INFORMATION_MESSAGE);
+			}
+		});
+		question.add(about);
+		
+		menuBar.add(menu);
+		menuBar.add(question);
+		window.setJMenuBar(menuBar);
 		
 		window.pack();
 		window.setVisible(true);
