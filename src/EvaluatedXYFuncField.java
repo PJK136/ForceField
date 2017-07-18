@@ -6,6 +6,8 @@ public class EvaluatedXYFuncField extends XYFuncField {
 	protected String stringExpression;
 	protected Expression expression;
 	
+	private double lastConstant = 0.;
+	
 	public EvaluatedXYFuncField(Type type, String expression) throws ParseException {
 		super();
 		setExpression(type, expression);
@@ -28,11 +30,22 @@ public class EvaluatedXYFuncField extends XYFuncField {
 	}
 	
 	@Override
+	public void setParameter(double parameter) {
+		super.setParameter(parameter);
+		expression.setVariable("c", parameter);
+	}
+	
+	@Override
 	public double compute(double xy, double constant) {
+		if (lastConstant != constant) {
+			expression.setVariable("k", constant);
+			lastConstant = constant;
+		}
+			
 		if (type == Type.X)
-			return expression.setVariable("x", xy).setVariable("c", parameter).setVariable("k", constant).evaluate();
+			return expression.setVariable("x", xy).evaluate();
 		else
-			return expression.setVariable("y", xy).setVariable("c", parameter).setVariable("k", constant).evaluate();
+			return expression.setVariable("y", xy).evaluate();
 	}
 
 	@Override
@@ -50,12 +63,16 @@ public class EvaluatedXYFuncField extends XYFuncField {
 			return Double.NaN;
 	}
 	
-	private static Expression stringToExpression(Type type, String expr) throws ParseException {
+	private Expression stringToExpression(Type type, String expr) throws ParseException {
 		try {
 			if (type == Type.X)
-				return new ExpressionBuilder(expr).variables("x", "c", "k").build();
+				return new ExpressionBuilder(expr).variables("x", "c", "k").build()
+												  .setVariable("c", parameter)
+												  .setVariable("k", lastConstant);
 			else
-				return new ExpressionBuilder(expr).variables("y", "c", "k").build();
+				return new ExpressionBuilder(expr).variables("y", "c", "k").build()
+												  .setVariable("c", parameter)
+												  .setVariable("k", lastConstant);
 		} catch (Exception e) {
 			throw new ParseException(e.getMessage());
 		}

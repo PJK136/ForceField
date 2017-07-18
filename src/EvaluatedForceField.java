@@ -9,6 +9,9 @@ public class EvaluatedForceField extends ForceField {
 	protected Expression xExpression;
 	protected Expression yExpression;
 	
+	private double lastX = 0.;
+	private double lastY = 0.;
+	
 	public EvaluatedForceField(String x, String y) throws ParseException {
 		super();
 		setXExpression(x);
@@ -28,19 +31,35 @@ public class EvaluatedForceField extends ForceField {
 	}
 	
 	@Override
-	public Vector2D compute(Vector2D point) {
-		xExpression.setVariable("x", point.x());
-		xExpression.setVariable("y", point.y());
+	public void setParameter(double parameter) {
+		super.setParameter(parameter);
 		xExpression.setVariable("c", parameter);
-		yExpression.setVariable("x", point.x());
-		yExpression.setVariable("y", point.y());
 		yExpression.setVariable("c", parameter);
+	}
+	
+	@Override
+	public Vector2D compute(Vector2D point) {
+		if (point.x() != lastX) {
+			xExpression.setVariable("x", point.x());
+			yExpression.setVariable("x", point.x());
+			lastX = point.x();
+		}
+		
+		if (point.y() != lastY) {
+			xExpression.setVariable("y", point.y());
+			yExpression.setVariable("y", point.y());
+			lastY = point.y();
+		}
+		
 		return new Vector2D(xExpression.evaluate(), yExpression.evaluate());
 	}
 	
-	private static Expression stringToExpression(String expr) throws ParseException {
+	private Expression stringToExpression(String expr) throws ParseException {
 		try {
-			return new ExpressionBuilder(expr).variables("x", "y", "c").build();
+			return new ExpressionBuilder(expr).variables("x", "y", "c").build()
+											  .setVariable("x", lastX)
+											  .setVariable("y", lastY)
+											  .setVariable("c", parameter);
 		} catch (Exception e) {
 			throw new ParseException(e.getMessage());
 		}
