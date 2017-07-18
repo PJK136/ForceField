@@ -6,50 +6,12 @@ import java.awt.Color;
  */
 public class Application {
 
-	public static void main(String[] args) {
-		XYFuncField yField = new XYFuncField() {
-			// Utiliser des blocs d'initialization est plus clair
-			{
-				step = 1./200.;
-				parameter = 2;
-				constantStart = -2.;
-				constantEnd = 2;
-				constantStep = 0.5;
-				type = Type.Y;
-				color = Color.green;
-			}
-			
-			@Override
-			public double compute(double y, double constant) {
-				return Math.exp(y)/(Math.pow(y+parameter, parameter)*constant);
-			}
-
-			@Override
-			public double computeLineIntegral(Vector2D start, double radius, int path) {
-				if (path == 0)
-					return Math.pow(radius,3)*(Math.PI/4. - 1./3.) +
-							   Math.pow(radius, 2)*(start.x()*Math.PI/4 + start.y()/2. + 1./2.) +
-							   radius*(start.x()*start.y() + start.y() + parameter);
-				else
-					return Math.pow(radius, 3)/3. +
-						   Math.pow(radius, 2)*(start.x() + start.y() + 1)/2. +
-						   radius*(start.x()*start.y() + start.y() + parameter);
-			}
-		};
+	public static void main(String[] args) throws ParseException {	
+		EvaluatedXYFuncField yField = new EvaluatedXYFuncField(XYFuncField.Type.Y, "exp(y)/(((y+c)^c)*k)", 1./200, 2, -2, 2, 0.5);
+		yField.setColor(Color.green);
 		
-		ForceField forceField = new ForceField() {
-			{
-				step = 1./100.;
-				parameter = 2.;
-				color = Color.red;
-			}
-			
-			@Override
-			public Vector2D compute(Vector2D point) {
-				// F = (x*y, y+c)
-				return new Vector2D(point.x()*point.y(), (point.y() + parameter));
-			}
-		};
+		EvaluatedForceField forceField = new EvaluatedForceField("xy", "y+c", 1./100., 2.);
+		forceField.setColor(Color.red);
 		
 		MainWindow window = new MainWindow(yField, forceField);
 	}

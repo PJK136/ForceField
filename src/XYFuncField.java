@@ -43,11 +43,6 @@ public abstract class XYFuncField extends FuncField {
 	public XYFuncField(double step, double parameter, double constantStart, double constantEnd, double constantStep) {
 		super(step, parameter, constantStart, constantEnd, constantStep);
 	}
-	
-	public XYFuncField(double step, double parameter, double constantStart, double constantEnd, double constantStep, Type type) {
-		super(step, parameter, constantStart, constantEnd, constantStep);
-		this.type = type;
-	}
 
 	public Type type() {
 		return type;

@@ -9,6 +9,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
@@ -496,33 +497,44 @@ public class FieldViewPanel extends JPanel implements MouseListener, MouseMotion
 			for (double constant = field.constantStart(); constant <= field.constantEnd(); constant += field.constantStep()) {
 				graphics.setColor(field.color());
 				if (type == RenderType.LINE || type == RenderType.RECT_LINE) {
-					Vector2D previousPoint = new Vector2D(field.compute(min, constant), min);
+					Vector2D previousPoint = null;
+					
 					Vector2D actualPoint;
 					
 					if (field.type() == XYFuncField.Type.X) {
-						for (double x = min + field.step(); x <= max; x += field.step()) {
-							
-							actualPoint = new Vector2D(x, field.compute(x, constant));
-							drawLine(graphics, previousPoint, actualPoint);
-							previousPoint = actualPoint;
+						for (double x = min; x <= max; x += field.step()) {
+							try {
+								actualPoint = new Vector2D(x, field.compute(x, constant));
+								if (previousPoint != null)
+									drawLine(graphics, previousPoint, actualPoint);
+								previousPoint = actualPoint;
+							} catch (ArithmeticException e) { }
 						}
 					} else {
-						for (double y = min + field.step(); y <= max; y += field.step()) {
-							
-							actualPoint = new Vector2D(field.compute(y, constant), y);
-							drawLine(graphics, previousPoint, actualPoint);
-							previousPoint = actualPoint;
+						for (double y = min; y <= max; y += field.step()) {
+							try {
+								actualPoint = new Vector2D(field.compute(y, constant), y);
+								if (previousPoint != null)
+									drawLine(graphics, previousPoint, actualPoint);
+								previousPoint = actualPoint;
+							} catch (ArithmeticException e) { }
 						}
 					}
 				}
 				
 				if (type != RenderType.LINE) {
 					if (field.type() == XYFuncField.Type.X) {
-						for (double x = min; x <= max; x += field.step())
-							drawPoint(graphics, x, field.compute(x, constant));
+						for (double x = min; x <= max; x += field.step()) {
+							try {
+								drawPoint(graphics, x, field.compute(x, constant));
+							} catch (ArithmeticException e) { }
+						}
 					} else {
-						for (double y = min; y <= max; y += field.step())
-							drawPoint(graphics, field.compute(y, constant), y);
+						for (double y = min; y <= max; y += field.step()) {
+							try {
+								drawPoint(graphics, field.compute(y, constant), y);
+							} catch (ArithmeticException e) { }
+						}
 					}
 				}
 			}
@@ -538,18 +550,23 @@ public class FieldViewPanel extends JPanel implements MouseListener, MouseMotion
 			for (double constant = field.constantStart(); constant <= field.constantEnd(); constant += field.constantStep()) {
 				graphics.setColor(field.color());
 				if (type == RenderType.LINE || type == RenderType.RECT_LINE) {
-					Vector2D previousPoint = field.compute(field.startT(), constant);
+					Vector2D previousPoint = field.compute(field.startT(), constant); //TODO : gérer arithmetic exception
 					Vector2D actualPoint;
 					for (double t = field.startT() + field.step(); t <= field.endT(); t += field.step()) {
-						actualPoint = field.compute(t, constant);
-						drawLine(graphics, previousPoint, actualPoint);
-						previousPoint = actualPoint;
+						try {
+							actualPoint = field.compute(t, constant);
+							drawLine(graphics, previousPoint, actualPoint);
+							previousPoint = actualPoint;
+						} catch (ArithmeticException e) { }
 					}
 				}
 				
 				if (type != RenderType.LINE) {
-					for (double t = field.startT() + field.step(); t <= field.endT(); t += field.step())
-						drawPoint(graphics, field.compute(t, constant));
+					for (double t = field.startT() + field.step(); t <= field.endT(); t += field.step()) {
+						try {
+							drawPoint(graphics, field.compute(t, constant));
+						} catch (ArithmeticException e) { }
+					}
 				}
 			}
 		}
@@ -570,9 +587,11 @@ public class FieldViewPanel extends JPanel implements MouseListener, MouseMotion
 					Vector2D previousPoint = startingPoint;
 					Vector2D actualPoint;
 					for (int i = 0; i < numberOfPoints; i++) {
-						actualPoint = field.nextPoint(previousPoint);
-						drawLine(graphics, previousPoint, actualPoint);
-						previousPoint = actualPoint;
+						try {
+							actualPoint = field.nextPoint(previousPoint);
+							drawLine(graphics, previousPoint, actualPoint);
+							previousPoint = actualPoint;
+						} catch (ArithmeticException e) {}
 					}
 				}
 				
@@ -580,8 +599,10 @@ public class FieldViewPanel extends JPanel implements MouseListener, MouseMotion
 					drawPoint(graphics, startingPoint);
 					Vector2D actualPoint = startingPoint;
 					for (int i = 0; i < numberOfPoints; i++) {
-						actualPoint = field.nextPoint(actualPoint);
-						drawPoint(graphics, actualPoint);
+						try {
+							actualPoint = field.nextPoint(actualPoint);
+							drawPoint(graphics, actualPoint);
+						} catch (ArithmeticException e) {}
 					}
 				}
 			}
@@ -691,5 +712,9 @@ public class FieldViewPanel extends JPanel implements MouseListener, MouseMotion
 	@Override
 	public void mouseExited(MouseEvent arg0) {
 
+	}
+	
+	public Rectangle2D viewBounds() {
+		return new Rectangle2D.Double(offset.x(), offset.y(), getWidth()/zoom, getHeight()/zoom);
 	}
 }
