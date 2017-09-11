@@ -6,13 +6,16 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.swing.AbstractListModel;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -32,6 +35,7 @@ import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
@@ -49,12 +53,12 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 	private JScrollPane sideScrollPane;
 	private JPanel sidePanel;
 	private FieldViewPanel fieldViewPanel;
-	
+
 	private JComboBox<String> renderType;
 	private JSpinner strokeSize;
 	private JSpinner parameter;
 	private JButton reset;
-	
+
 	private JCheckBox analytic;
 	private JComboBox<String> analyticExpressionType;
 	private JTextField analyticExpression;
@@ -63,7 +67,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 	private JSpinner constantEnd;
 	private JSpinner constantStep;
 	private JButton analyticColor;
-	
+
 	private JCheckBox numeric;
 	private JTextField numericXExpression;
 	private JTextField numericYExpression;
@@ -75,7 +79,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 	private JButton autoAddPoints;
 	private JSpinner autoPointsCount;
 	private JButton numericColor;
-	
+
 	private JCheckBox lineIntegral;
 	private JComboBox<String> lineIntegralType;
 	private JSpinner lineIntegralRadius;
@@ -88,10 +92,10 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 	private JLabel lineIntegralRelativeError;
 	private Vector2D lineIntegralStartingPoint;
 	private JButton lineIntegralColor;
-	
+
 	private EvaluatedXYFuncField analyticField;
 	private EvaluatedForceField numericField;
-	
+
 	/**
 	 * Cette classe stocke la liste des points de départ pour la modélisation numérique.
 	 */
@@ -101,7 +105,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 		public Vector2DListModel() {
 			vectors = new ArrayList<Vector2D>();
 		}
-		
+
 		@Override
 		public String getElementAt(int index) {
 			return vectors.get(index).toStringNdecimals(2);
@@ -111,7 +115,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 		public int getSize() {
 			return vectors.size();
 		}
-		
+
 		/**
 		 * Ajoute un point à la liste.
 		 * @param element Point à ajouter
@@ -120,7 +124,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			vectors.add(element);
 			fireIntervalAdded(this, vectors.size()-1, vectors.size()-1);
 		}
-		
+
 		/**
 		 * Enlève un point à la liste identifié par son index
 		 * @param index Index du point
@@ -129,12 +133,12 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			vectors.remove(index);
 			fireIntervalRemoved(this, index, index);
 		}
-		
+
 		public List<Vector2D> getList() {
 			return vectors;
 		}
 	}
-	
+
 	MainWindow(EvaluatedXYFuncField analyticField, EvaluatedForceField numericField) {
 		window = new JFrame();
 		window.setTitle("Force Field Vizualizer");
@@ -142,124 +146,124 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 
 		this.analyticField = analyticField;
 		this.numericField = numericField;
-		
+
 		fieldViewPanel = new FieldViewPanel();
-		
+
 		sidePanel = new JPanel(new GridBagLayout());
-		
+
 		renderType = new JComboBox<String>(new String[] {"Croix", "Rectangle", "Ovale", "Ligne", "Rectangle & ligne"});
 		addLabelComponentToSidePanel("Type de Rendu", renderType);
-		
+
 		strokeSize = new JSpinner(new SpinnerNumberModel(fieldViewPanel.strokeSize(), 1., 25., 1.));
 		addLabelComponentToSidePanel("Épaisseur du trait :", strokeSize);
-			
+
 		parameter = new JSpinner(new SpinnerNumberModel(analyticField.parameter(), -5, 5., 0.1));
 		addLabelComponentToSidePanel("Paramètre c :", parameter);
-		
+
 		reset = new JButton("Réinitialiser le graphe");
 		addOneComponentToSidePanel(reset);
-		
+
 		addSpaceToSidePanel();
-		
+
 		analytic = new JCheckBox("Modélisation analytique : ", false);
 		analytic.setHorizontalTextPosition(JCheckBox.LEFT);
 		addOneComponentToSidePanel(analytic);
-		
+
 		analyticExpressionType = new JComboBox<>(new String[] {"y = ", "x = "});
 		if (analyticField.type() == XYFuncField.Type.X)
 			analyticExpressionType.setSelectedIndex(0);
 		else
 			analyticExpressionType.setSelectedIndex(1);
-			
+
 		analyticExpression = new JTextField(analyticField.expression());
 		addComponentsToSidePanel(analyticExpressionType, analyticExpression);
-		
+
 		analyticStep = new JSpinner(new SpinnerNumberModel(analyticField.step(), 0.001, 10, 0.001));
 		addLabelComponentToSidePanel("Pas analytique :", analyticStep);
-		
+
 		constantStart = new JSpinner(new SpinnerNumberModel(analyticField.constantStart(), -100., 100., 1.));
 		addLabelComponentToSidePanel("Constante début :", constantStart);
-		
+
 		constantEnd = new JSpinner(new SpinnerNumberModel(analyticField.constantEnd(), -100., 100., 1.));
 		addLabelComponentToSidePanel("Constante fin :", constantEnd);
-		
+
 		constantStep = new JSpinner(new SpinnerNumberModel(analyticField.constantStep(), 0.01, 10, 0.01));
 		addLabelComponentToSidePanel("Pas de constante :", constantStep);
-		
+
 		analyticColor = new JButton("Changer...");
 		addLabelComponentToSidePanel("Couleur de la courbe :", analyticColor);
 
 		addSpaceToSidePanel();
-		
+
 		numeric = new JCheckBox("Modélisation numérique : ", true);
 		numeric.setHorizontalTextPosition(JCheckBox.LEFT);
 		addOneComponentToSidePanel(numeric);
-		
+
 		numericXExpression = new JTextField(numericField.xExpression());
 		addLabelComponentToSidePanel("Fx = ", numericXExpression);
-		
+
 		numericYExpression = new JTextField(numericField.yExpression());
 		addLabelComponentToSidePanel("Fy = ", numericYExpression);
-		
+
 		numericStep = new JSpinner(new SpinnerNumberModel(numericField.step(), 0.001, 10, 0.001));
 		addLabelComponentToSidePanel("Pas numérique :", numericStep);
-		
+
 		numberOfPoints = new JSpinner(new SpinnerNumberModel(fieldViewPanel.numberOfPoints(), 0, 10000, 100));
 		addLabelComponentToSidePanel("Nombre de points :", numberOfPoints);
-		
+
 		startingPointList = new JList<String>(new Vector2DListModel());
 		addLabelComponentToSidePanel("Points de départ :", new JScrollPane(startingPointList));
-		
+
 		addPoint = new JToggleButton("+");
 		removePoint = new JButton("-");
 		addTwoComponentsToSidePanel(addPoint, removePoint);
-		
+
 		autoAddPoints = new JButton("Ajout automatique : ");
 		autoPointsCount = new JSpinner(new SpinnerNumberModel(1000, 0, 10000, 100));
 		addComponentsToSidePanel(autoAddPoints, autoPointsCount);
-		
+
 		numericColor = new JButton("Changer...");
 		addLabelComponentToSidePanel("Couleur de la courbe :", numericColor);
-		
+
 		addSpaceToSidePanel();
-		
+
 		lineIntegral = new JCheckBox("Circulation :", true);
 		lineIntegral.setHorizontalTextPosition(JCheckBox.LEFT);
 		addOneComponentToSidePanel(lineIntegral);
-		
+
 		lineIntegralType = new JComboBox<String>(new String[] {"Arc de cercle", "Droite"});
 		addLabelComponentToSidePanel("Ligne :", lineIntegralType);
-		
+
 		lineIntegralRadius = new JSpinner(new SpinnerNumberModel(fieldViewPanel.lineIntegralRadius(), 0., 100., 1.));
 		addLabelComponentToSidePanel("Rayon :", lineIntegralRadius);
-		
+
 		lineIntegralStep = new JSpinner(new SpinnerNumberModel(0.001, 0.000001, 1, 0.000001));
 		//Modifie la précision de la valeur stockée
 		lineIntegralStep.setEditor(new JSpinner.NumberEditor(lineIntegralStep, "0.000000"));
 		addLabelComponentToSidePanel("Pas :", lineIntegralStep);
-		
+
 		lineIntegralStartingPoint = fieldViewPanel.lineIntegralStartingPoint();
 		lineIntegralStartingPointLabel = new JLabel(lineIntegralStartingPoint.toString());
 		addLabelComponentToSidePanel("Point de départ :", lineIntegralStartingPointLabel);
-		
+
 		lineIntegralSetStartingPoint = new JToggleButton("Définir le point de départ");
 		addOneComponentToSidePanel(lineIntegralSetStartingPoint);
-		
+
 		lineIntegralColor = new JButton("Changer...");
 		addLabelComponentToSidePanel("Couleur de la courbe :", lineIntegralColor);
-		
+
 		lineIntegralAnalytic = new JLabel(String.valueOf(0.0));
 		addLabelComponentToSidePanel("Circulation analytique :", lineIntegralAnalytic);
-		
+
 		lineIntegralNumeric = new JLabel(String.valueOf(0.0));
 		addLabelComponentToSidePanel("Circulation numérique :", lineIntegralNumeric);
-		
+
 		lineIntegralAbsoluteError = new JLabel(String.valueOf(0.0));
 		addLabelComponentToSidePanel("Erreur absolue :", lineIntegralAbsoluteError);
-		
+
 		lineIntegralRelativeError = new JLabel(String.valueOf(0.0));
 		addLabelComponentToSidePanel("Erreur relative :", lineIntegralRelativeError);
-		
+
 		{ //Pousse le contenu vers le haut
 			GridBagConstraints constraints = new GridBagConstraints();
 			constraints.fill = GridBagConstraints.BOTH;
@@ -267,21 +271,21 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			constraints.weighty = 1;
 			sidePanel.add(Box.createGlue(), constraints);
 		}
-		
+
 		((Vector2DListModel) startingPointList.getModel()).addElement(new Vector2D(0.5, 0));
 		// /!\ Le tableau est partagé startingPointList et fielViewPanel
-		fieldViewPanel.setStartingPoints(((Vector2DListModel) startingPointList.getModel()).getList()); 
-		
+		fieldViewPanel.setStartingPoints(((Vector2DListModel) startingPointList.getModel()).getList());
+
 		sideScrollPane = new JScrollPane(sidePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		
+
 		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, sideScrollPane, fieldViewPanel);
 		window.getContentPane().add(splitPane);
-		
+
 		renderType.addItemListener(this);
 		strokeSize.addChangeListener(this);
 		parameter.addChangeListener(this);
 		reset.addActionListener(this);
-		
+
 		analytic.addItemListener(this);
 		analyticExpressionType.addActionListener(this);
 		analyticExpression.getDocument().addDocumentListener(this);
@@ -307,19 +311,20 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 		lineIntegralStep.addChangeListener(this);
 		lineIntegralSetStartingPoint.addActionListener(this);
 		lineIntegralColor.addActionListener(this);
-		
+
 		fieldViewPanel.addMouseListener(this);
-		
+
 		/*Comme les cases à cocher ont été initialisées avec des valeurs opposées,
 		les intructions qui suivent vont déclencher les listeners pour finir d'ajuster l'interface :
 		activation/désactivation des champs correspondants, etc.*/
 		analytic.setSelected(true);
 		numeric.setSelected(false);
 		lineIntegral.setSelected(false);
-		
+
 		JMenuBar menuBar = new JMenuBar();
 		JMenu menu = new JMenu("Menu");
 		JMenuItem quit = new JMenuItem("Quitter");
+		quit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
 		quit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -327,7 +332,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			}
 		});
 		menu.add(quit);
-		
+
 		JMenu question = new JMenu("?");
 		JMenuItem about = new JMenuItem("À propos...");
 		about.addActionListener(new ActionListener() {
@@ -340,15 +345,15 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			}
 		});
 		question.add(about);
-		
+
 		menuBar.add(menu);
 		menuBar.add(question);
 		window.setJMenuBar(menuBar);
-		
+
 		window.pack();
 		window.setVisible(true);
 	}
-	
+
 	/**
 	 * Ajoute deux composants sur une ligne du panneau latéral. Le second composant s'étendra au maximum.
 	 * @param component1 Premier composant à ajouter
@@ -364,7 +369,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 		constraints.gridwidth = GridBagConstraints.REMAINDER;
 		sidePanel.add(component2, constraints);
 	}
-	
+
 	/**
 	 * Ajoute un composant précédé d'un titre sur une ligne du panneau latéral.
 	 * @param label Titre du composant
@@ -373,7 +378,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 	private void addLabelComponentToSidePanel(String label, Component component) {
 		addComponentsToSidePanel(new JLabel(label), component);
 	}
-	
+
 	/**
 	 * Ajoute un composant occupant tout une ligne du panneau latéral.
 	 * @param component Composant à ajouter
@@ -384,7 +389,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 		constraints.gridwidth = GridBagConstraints.REMAINDER;
 		sidePanel.add(component, constraints);
 	}
-	
+
 	/**
 	 * Ajoute deux composants sur une ligne du panneau latéral ayant une même largeur.
 	 * @param component1 Premier composant à ajouter
@@ -397,7 +402,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 		wrapComponents.add(component2);
 		addOneComponentToSidePanel(wrapComponents);
 	}
-	
+
 	/**
 	 * Ajoute un petit espace vertical sur toute une ligne du panneau latéral.
 	 */
@@ -408,7 +413,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 		constraints.weighty = 0.05;
 		sidePanel.add(Box.createGlue(), constraints);
 	}
-	
+
 	public FieldViewPanel fieldViewPanel() {
 		return fieldViewPanel;
 	}
@@ -428,7 +433,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			analyticField.setConstantStart((double) constantStart.getValue());
 			if ((double)constantStart.getValue() > (double)constantEnd.getValue())
 				constantEnd.setValue(constantStart.getValue());
-		}		
+		}
 		else if (event.getSource() == constantEnd) {
 			analyticField.setConstantEnd((double) constantEnd.getValue());
 			if ((double)constantEnd.getValue() < (double)constantStart.getValue())
@@ -446,7 +451,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 		} else if (event.getSource() == lineIntegralStep) {
 			updateLineIntegral();
 		}
-		
+
 		fieldViewPanel.update();
 	}
 
@@ -480,7 +485,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			constantEnd.setEnabled(enabled);
 			constantStep.setEnabled(enabled);
 			analyticColor.setEnabled(enabled);
-			
+
 			if (enabled)
 				fieldViewPanel.addField(analyticField);
 			else
@@ -497,7 +502,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			autoAddPoints.setEnabled(enabled);
 			autoPointsCount.setEnabled(enabled);
 			numericColor.setEnabled(enabled);
-			
+
 			if (enabled)
 				fieldViewPanel.addField(numericField);
 			else
@@ -513,7 +518,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			lineIntegralNumeric.setEnabled(enabled);
 			lineIntegralAbsoluteError.setEnabled(enabled);
 			lineIntegralRelativeError.setEnabled(enabled);
-			
+
 			fieldViewPanel.setLineIntegralVisibility(enabled);
 			updateLineIntegral();
 		} else if (event.getSource() == lineIntegralType) {
@@ -521,7 +526,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			updateLineIntegral();
 		}
 	}
-	
+
 	@Override
 	public void mouseClicked(MouseEvent event) {
 		if (addPoint.isSelected()) {
@@ -529,7 +534,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			list.addElement(fieldViewPanel.getLastMousePositionOnGraph());
 			fieldViewPanel.update();
 		}
-		
+
 		if (lineIntegralSetStartingPoint.isSelected()) {
 			lineIntegralStartingPoint = fieldViewPanel.getLastMousePositionOnGraph();
 			lineIntegralStartingPointLabel.setText(lineIntegralStartingPoint.toStringNdecimals(2));
@@ -537,7 +542,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			updateLineIntegral();
 		}
 	}
-	
+
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		if (event.getSource() == reset)
@@ -563,14 +568,14 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			Vector2DListModel list = (Vector2DListModel) startingPointList.getModel();
 			while (list.getSize() > 0)
 				list.remove(0);
-			
+
 			Rectangle2D viewBounds = fieldViewPanel.viewBounds();
 			for (double x = viewBounds.getX(); x < viewBounds.getX()+viewBounds.getWidth(); x += viewBounds.getWidth()/Math.sqrt((int) autoPointsCount.getValue())) {
 				for (double y = viewBounds.getY(); y < viewBounds.getY()+viewBounds.getHeight(); y += viewBounds.getHeight()/Math.sqrt((int) autoPointsCount.getValue())) {
 					list.addElement(new Vector2D(x, y));
 				}
 			}
-			
+
 			fieldViewPanel.update();
 		}
 		else if (event.getSource() == analyticColor || event.getSource() == numericColor)
@@ -580,7 +585,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 				field = analyticField;
 			else
 				field = numericField;
-			
+
 			Color color = JColorChooser.showDialog(window, "Choisissez une couleur", field.color());
 			if (color != null) {
 				field.setColor(color);
@@ -600,7 +605,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 				fieldViewPanel.setSettingPointMode(false);
 		}
 	}
-	
+
 	/**
 	 * Met à jour l'affichage des résultats des calculs de circulation.
 	 */
@@ -623,25 +628,25 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 	@Override
 	public void mouseEntered(MouseEvent arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void mouseExited(MouseEvent arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void mousePressed(MouseEvent arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -655,7 +660,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 				analyticField.setExpression(XYFuncField.Type.X, analyticExpression.getText());
 			else if  (analyticExpressionType.getSelectedItem().equals("x = "))
 				analyticField.setExpression(XYFuncField.Type.Y, analyticExpression.getText());
-			
+
 			analyticExpression.setForeground(Color.black);
 			fieldViewPanel.update();
 			updateLineIntegral();
@@ -663,7 +668,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			analyticExpression.setForeground(Color.red);
 		}
 	}
-	
+
 	private void updateNumericXExpression() {
 		try {
 			numericField.setXExpression(numericXExpression.getText());
@@ -674,7 +679,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			numericXExpression.setForeground(Color.red);
 		}
 	}
-	
+
 	private void updateNumericYExpression() {
 		try {
 			numericField.setYExpression(numericYExpression.getText());
@@ -685,7 +690,7 @@ public class MainWindow implements ChangeListener, MouseListener, ItemListener, 
 			numericYExpression.setForeground(Color.red);
 		}
 	}
-	
+
 	@Override
 	public void insertUpdate(DocumentEvent event) {
 		if (event.getDocument() == analyticExpression.getDocument()) {
